@@ -1,5 +1,5 @@
 class BooksController < ApplicationController
-  before_action :find_book, only: [:show]
+  before_action :find_book, only: %i[show edit update destroy]
   before_action :find_user, only: [:show]
 
   def new
@@ -10,17 +10,9 @@ class BooksController < ApplicationController
   def index
     @categories = Category.all
     @authors = Author.all
-    @q = Book.search(params[:q])
-    @search = @q.result(distinct: true)
-
+    @search = !params[:keyword].nil? ? Book.where('lower(name) LIKE ?', "%#{params[:keyword]}%") : Book.all
     @pagy, @books = pagy(@search.order('created_at DESC'), items: 9)
     @sort = ['Default', 'Name of book', 'Name of author']
-    respond_to do |format|
-      format.html
-      format.js
-      format.json { render json: @books }
-    end
-    # byebug
   end
 
   def show
@@ -44,6 +36,23 @@ class BooksController < ApplicationController
     else
       flash[:danger] = 'Creating book failed'
       render 'new'
+    end
+  end
+
+  def edit; end
+
+  def update
+    if @book.update(book_params)
+      redirect_to book_path
+    else
+      render 'edit'
+    end
+  end
+
+  def destroy
+    @book.destroy
+    respond_to do |format|
+      format.js
     end
   end
 
