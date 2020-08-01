@@ -6,10 +6,8 @@ class AuthorsController < ApplicationController
   end
 
   def index
-    # @pagy, @authors = pagy(Author.all, items: 9)
-    @q = Author.search(params[:q])
-    @search = @q.result(distinct: true)
-    @pagy, @authors = pagy(@search.order('created_at DESC'), items: 9)
+    @search = Author.search_name(params[:keyword]).sort_created_at
+    @pagy, @authors = pagy(@search, items: 9)
   end
 
   def show
@@ -26,10 +24,9 @@ class AuthorsController < ApplicationController
   end
 
   def find_author
-    @author = Author.find(params[:id])
-    return if @author
-
-    flash[:danger] = 'error'
+    @author = Author.find_by(id: params[:id])
+    return unless @author.blank?
+    flash[:danger] = 'this author is not existed'
     redirect_to authors_path
   end
 end
